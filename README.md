@@ -33,7 +33,7 @@ Le port 5432 est mappé sur le 5433 de ma machine car j'ai deja un postgres qui 
 ```sh
 docker run -d -p 5433:5432 -v ./data:/var/lib/postgresql/data --name postgres --network tp1-network tp1/postgres
 ```
-OU 
+OU avec l'option -e pour définir les variables d'environnement
 ```sh
 docker run -d -p 5433:5432 -v ./data:/var/lib/postgresql/data --name postgres --network tp1-network -e POSTGRES_PASSWORD=pwd tp1/postgres
 ```
@@ -45,6 +45,7 @@ docker run -d -p 9000:9000 --network tp1-network --name adminer adminer
 
 Pour se connecter à la base via Adminer, il faut récupérer l'IP de notre postgres, car nous sommes bien sur 2 'machines' différentes dans le même sous réseau. On fait un `docker inspect postgres` et on trouve la ligne : `"IPAddress": "172.18.0.3",...`.
 On utilise donc celle ci avec le port 5432 pour se connecter a la BDD.
+Ou alors on peut utiliser le nom du container directement, car ils sont dans le même réseau docker.
 
 ![capture adminer](assets/adminer.png)
 
@@ -112,6 +113,7 @@ services:
         container_name: api
         build: 
             context: spring/simple-api-student
+            # comme le fichier s'appelle Dockerfile, on peut ne pas le spécifier
             dockerfile: Dockerfile
         networks: 
           - tp1-network
@@ -141,6 +143,7 @@ services:
           - "8080:80"
         networks:
           - tp1-network
+        # depends_on serait optionnel ici, car le front n'est pas sensé dépendre de l'api pour fonctionner
         depends_on:
           - api
 
@@ -156,7 +159,7 @@ POSTGRES_PASSWORD=pwd
 POSTGRES_DB=database
 ```
 
-On peut aussi utiliser les variables d'environnement dans le application.yml de l'api comme ceci :
+On peut du coup aussi utiliser les variables d'environnement dans le application.yml de l'api comme ceci :
 ```yaml
 ...
 spring:
@@ -190,6 +193,7 @@ PS : comme nous sommes dans un docker network, on peut utiliser le nom du contai
 
 
 ```sh
+# Build de l'image docker
 docker build -t devops-web .                 
 [+] Building 1.0s (9/9) FINISHED                                                                         docker:default
  => [internal] load .dockerignore                                                                                  0.0s
@@ -210,8 +214,9 @@ docker build -t devops-web .
 ```
 
 ```shell
+# On tag l'image avec un nom de repository et une version
 docker tag devops-web daddyornot/devops-web:1.0
-
+# On push l'image sur docker hub
 docker push daddyornot/devops-web:1.0          
 The push refers to repository [docker.io/daddyornot/devops-web]
 38a33e45fd7a: Pushed 
@@ -224,6 +229,7 @@ c3147eaa9536: Mounted from library/httpd
 fb1bd2fc5282: Mounted from library/httpd 
 1.0: digest: sha256:bc2d3674a80010b0c5f0990a4215c060937b144f2e8b39a5e41bb6baea1df482 size: 1987
 ```
+Cela nous permettra à l'avenir de pouvoir pull l'image depuis n'importe quelle machine, et de pouvoir la lancer.
 
 ![capture docker hub](assets/hub.png)
 
