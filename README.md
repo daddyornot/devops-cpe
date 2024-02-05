@@ -4,15 +4,43 @@
 
 # 1-1 Document your database container essentials: commands and Dockerfile.
 
-### Arborescence 
+## Architecture finale
 ```sh
-╰─ tree 
+╰─ tree                                                   
 .
-├── CreateScheme.sql
-├── data  [error opening dir]
-├── Dockerfile
-├── InsertData.sql
-└── readme.md
+├── compose.override.yml
+├── compose.yml
+├── database
+│   ├── CreateScheme.sql
+│   ├── Dockerfile
+│   └── InsertData.sql
+├── httpd
+│   ├── Dockerfile
+│   ├── httpd.conf
+│   └── index.html
+├── java
+│   ├── Dockerfile
+│   ├── Main.class
+│   └── Main.java
+├── readme.md
+└── spring
+    └── simple-api-student
+        ├── Dockerfile
+        ├── HELP.md
+        ├── pom.xml
+        ├── README.md
+        └── src
+            ├── main
+            │   ├── java
+            │   │   └── fr
+			...
+            │   └── resources
+            │       └── application.yml
+            └── test
+             ...
+
+28 directories, 32 files
+
 ```
 
 ### Dockerfile
@@ -25,7 +53,10 @@ ENV POSTGRES_DB=db \
 
 COPY ./*.sql /docker-entrypoint-initdb.d
  ```
-OU alors, on peut *ne pas mettre* les variables d'environnement ici (particulièrement le password), et le(s) définir dans la commande `docker run` lorsqu'on démarre le conteneur.
+
+Préférer mettre les scripts sql dans un dossier à part. Cela permet de rendre l'architecture plus propre et plus lisible.
+
+Aussi, on peut *ne pas mettre* les variables d'environnement ici (particulièrement le password), et le(s) définir dans la commande `docker run` lorsqu'on démarre le conteneur.
 ### Commande pour lancer la base Postgres
 
 Le port 5432 est mappé sur le 5433 de ma machine car j'ai deja un postgres qui tourne.
@@ -88,11 +119,13 @@ ENTRYPOINT java -jar myapp.jar
 `up` : crée et lance les instances du fichier compose.yml
 
 `down` : eteint les containers du fichier compose.yml
+- `-v or --volumes` : supprime les volumes associés
 
 `logs` : affiche tous les logs des conteneurs du compose.yml
 - `--tails 50` : affiche les 50 dernières lignes
 - `--follow` : continue a s'éxécuter pour suivre le fil
 - `--timestamps` : affiche les timestamps
+
 `ls` : affiche les différentes stacks en cours d'éxécution : cette commande peut etre éxécutée depuis n'importe où, pas seulement aux endroits où il y a un fichier compose.yml
 
 `-d` : lance en arrière plan
@@ -105,6 +138,8 @@ ENTRYPOINT java -jar myapp.jar
 # 1-4 Document your docker-compose file.
 Ajout d'un fichier `.env` pour garder toute les données sensibles dedans
 
+On utilise un volume nommé pour la base de données, cela permet de ne pas perdre les données si le container est supprimé, mais également on laisse docker s'occuper de l'endroit où est stocké ce volume.
+
 ```yaml
 version: '3.8'
 
@@ -113,7 +148,6 @@ services:
         container_name: api
         build: 
             context: spring/simple-api-student
-            # comme le fichier s'appelle Dockerfile, on peut ne pas le spécifier
             dockerfile: Dockerfile
         networks: 
           - tp1-network
@@ -132,23 +166,22 @@ services:
         env_file:
           - .env
         volumes:
-          - ./data:/var/lib/postgresql/data
+          - data:/var/lib/postgresql/data
 
     web:
         container_name: web
-        build:
-            context: httpd
-            dockerfile: Dockerfile
         ports: 
           - "8080:80"
         networks:
           - tp1-network
-        # depends_on serait optionnel ici, car le front n'est pas sensé dépendre de l'api pour fonctionner
         depends_on:
           - api
 
 networks:
     tp1-network:
+
+volumes:
+    data:
 ```
 
 
@@ -172,9 +205,9 @@ spring:
     generate-ddl: false
     open-in-view: true
   datasource:
-    url: jdbc:postgresql://database:5432/${POSTGRES_DB}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://database:5432/${POSTGRES_DB:database}
+    username: ${POSTGRES_USER:usr}
+    password: ${POSTGRES_PASSWORD:pwd}
     driver-class-name: org.postgresql.Driver
 management:
  server:
@@ -194,7 +227,7 @@ PS : comme nous sommes dans un docker network, on peut utiliser le nom du contai
 
 ```sh
 # Build de l'image docker
-docker build -t devops-web .                 
+docker build -t daddyornot/devops-web .                 
 [+] Building 1.0s (9/9) FINISHED                                                                         docker:default
  => [internal] load .dockerignore                                                                                  0.0s
  => => transferring context: 2B                                                                                    0.0s
@@ -233,42 +266,3 @@ Cela nous permettra à l'avenir de pouvoir pull l'image depuis n'importe quelle 
 
 ![capture docker hub](assets/hub.png)
 
-## Architecture finale
-```sh
-╰─ tree                                                   
-.
-├── compose.yml
-├── data  [error opening dir]
-├── database
-│   ├── CreateScheme.sql
-│   ├── Dockerfile
-│   └── InsertData.sql
-├── httpd
-│   ├── Dockerfile
-│   ├── httpd.conf
-│   └── index.html
-├── java
-│   ├── Dockerfile
-│   ├── Main.class
-│   └── Main.java
-├── readme.md
-└── spring
-    └── simple-api-student
-        ├── data  [error opening dir]
-        ├── Dockerfile
-        ├── HELP.md
-        ├── pom.xml
-        ├── README.md
-        └── src
-            ├── main
-            │   ├── java
-            │   │   └── fr
-			...
-            │   └── resources
-            │       └── application.yml
-            └── test
-             ...
-
-28 directories, 32 files
-
-```
