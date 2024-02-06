@@ -403,7 +403,7 @@ jobs:
 ```
 
 ### build-and-push-docker-image.yml
-Ce job sera lancé à chaque fois que le job précédent (test-backend) se termine avec succès, grace à l'option workflow_run:completed.
+Ce job sera lancé à chaque fois que le job précédent (test-backend) se termine, grace à l'option workflow_run:completed. Aussi, grace aux on-success et on-failure, on peut lancer des jobs différents en fonction du résultat du job précédent.
 ```yaml
 name: Build and Push to DockerHub
 on:
@@ -457,4 +457,11 @@ jobs:
       - run: echo 'Test Backend and Sonar Analysis has failed'
 ```
 
-![capture splitted pipeline](assets/split-pipeline.png)
+Ainsi, on peut voir sur un failed de test-backend, le job suivant se lance, mais ne fait pas les étapes liées a docker, il effectue seulement celle du on-failure : 
+![capture failed](assets/failed-test.png)
+![capture failed](assets/on-failure.png)
+![capture failed](assets/detail-on-failure.png)
+
+Et sur une pipeline réussie, on voit bien que le job on-success se lance, et effectue les étapes liées à docker :
+
+
