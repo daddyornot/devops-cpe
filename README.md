@@ -274,4 +274,4 @@ Cela nous permettra à l'avenir de pouvoir pull l'image depuis n'importe quelle 
 
 Testcontainers sont des librairies Java qui permettent de lancer des conteneurs Docker pour les tests. Cela permet de tester des applications qui ont besoin de dépendances externes (comme une base de données) sans avoir à les installer sur la machine de développement.
 
-
+![capture action success](assets/action-succeed.png)
