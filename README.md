@@ -275,3 +275,93 @@ Cela nous permettra à l'avenir de pouvoir pull l'image depuis n'importe quelle 
 Testcontainers sont des librairies Java qui permettent de lancer des conteneurs Docker pour les tests. Cela permet de tester des applications qui ont besoin de dépendances externes (comme une base de données) sans avoir à les installer sur la machine de développement.
 
 ![capture action success](assets/action-succeed.png)
+
+## Configuration
+
+Ne pas oublier de renseigner les secrets dans les settings du repository sur GitHub : `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `SONAR_TOKEN`
+
+![capture secrets](assets/docker-secrets.png)
+
+```yaml
+name: CI devops 2023
+on:
+  # triggered on push on main or develop branches
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+
+jobs:
+  # Job to build and test the backend
+  test-backend: 
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.5.0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3 
+        with:
+          java-version: 17
+          distribution: 'adopt'
+
+      - name: Build and test with Maven
+        # place where the code is located
+        working-directory: ./simple-api-student
+        # run the following commands to build, test, and analyze the code with SonarCloud
+        run: |
+          mvn clean install
+          mvn -B verify sonar:sonar -Dsonar.projectKey=tp-devops-cpe-2024_simple-api -Dsonar.organization=tp-devops-cpe-2024 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./simple-api-student/pom.xml
+
+  # Job to build and publish docker image
+  build-and-push-docker-image:
+   needs: test-backend
+   # run only when code is compiling and tests are passing
+   runs-on: ubuntu-22.04
+
+   # steps to perform in job
+   steps:
+    - name: Checkout code
+      uses: actions/checkout@v2.5.0
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build image and push backend
+      uses: docker/build-push-action@v3
+      with:
+        # relative path to the place where source code with Dockerfile is located
+        context: ./simple-api-student
+        tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-simple-api:latest
+        # This line allows to deploy the image only when the code is pushed to the main branch
+        push: ${{ github.ref == 'refs/heads/main' }}
+
+    - name: Build image and push database
+      uses: docker/build-push-action@v3
+      with:
+        context: ./database
+        tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-database:latest
+        push: ${{ github.ref == 'refs/heads/main' }}
+
+    - name: Build image and push httpd
+      uses: docker/build-push-action@v3
+      with:
+        context: ./httpd
+        tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-httpd:latest
+        push: ${{ github.ref == 'refs/heads/main' }}
+```
+
+![full pipeline](assets/full-pipeline.png)
+
+## SonarCloud
+
+Une fois le compte créé, il faut créer une organisation ainsi qu'un projet.
+Il nous faudra également créer un token afin de pouvoir accéder à l'API de SonarCloud.
+Modifier les valeurs de PROJECT_KEY et ORGANIZATION_KEY par les réels.
+Il faut ajouter cette commande lors du build and test afin de lancer l'analyse de SonarCloud :
+```sh
+mvn -B verify sonar:sonar -Dsonar.projectKey=PROJECT_KEY -Dsonar.organization=ORGANIZATION_KEY -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./simple-api-student/pom.xml
+```
+![capture sonar](assets/sonar.png)
