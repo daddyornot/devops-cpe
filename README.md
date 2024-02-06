@@ -360,14 +360,15 @@ jobs:
 
 ## 2-3 SonarCloud - Document your quality gate configuration. 
 
-Une fois le compte créé, il faut créer une organisation ainsi qu'un projet.
-Il nous faudra également créer un token afin de pouvoir accéder à l'API de SonarCloud.
-Modifier les valeurs de `PROJECT_KEY` et `ORGANIZATION_KEY` par les réels.
+- Une fois le compte créé, il faut créer une organisation ainsi qu'un projet.
+- Il nous faudra également créer un token afin de pouvoir accéder à l'API de SonarCloud.
+- Il faut aussi renommer la branche master en main pour que cela soit bien intégré avec SonarCloud.
+- Modifier les valeurs de `PROJECT_KEY` et `ORGANIZATION_KEY` par les réels.
 Il faut ajouter cette commande lors du build and test afin de lancer l'analyse de SonarCloud :
 ```sh
 mvn -B verify sonar:sonar -Dsonar.projectKey=PROJECT_KEY -Dsonar.organization=ORGANIZATION_KEY -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./pom.xml
 ```
-![capture sonar](assets/sonar.png)
+![capture sonar](assets/quality-gate.png)
 
 ## Bonus - Splitted pipeline
 
@@ -402,7 +403,9 @@ jobs:
      #finally build your app with the latest command
       - name: Build and test with Maven
         working-directory: ./simple-api-student
-        run: mvn -B verify sonar:sonar -Dsonar.projectKey=tp-devops-cpe-2024_simple-api -Dsonar.organization=tp-devops-cpe-2024 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./pom.xml
+        run: |
+              mvn clean install 
+              mvn -B verify sonar:sonar -Dsonar.projectKey=tp-devops-cpe-2024_simple-api -Dsonar.organization=tp-devops-cpe-2024 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./pom.xml
 ```
 
 ### build-and-push-docker-image.yml
