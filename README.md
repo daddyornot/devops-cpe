@@ -457,7 +457,4 @@ jobs:
       - run: echo 'Test Backend and Sonar Analysis has failed'
 ```
 
-Sur la capture, on voit bien que le job build-and-push-docker-image ne s'est pas lancé car le job test-backend a échoué en premier lieu.
-Ensuite sur le second run, le job build-and-push-docker-image s'est bien lancé car le job test-backend a réussi.
-
 ![capture splitted pipeline](assets/split-pipeline.png)
