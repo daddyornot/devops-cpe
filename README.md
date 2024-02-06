@@ -464,4 +464,8 @@ Ainsi, on peut voir sur un failed de test-backend, le job suivant se lance, mais
 
 Et sur une pipeline réussie, on voit bien que le job on-success se lance, et effectue les étapes liées à docker :
 
+![capture success](assets/pipeline-success.png)
+![capture success](assets/on-success.png)
+![capture success](assets/detail-on-success.png)
+
 
