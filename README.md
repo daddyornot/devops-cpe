@@ -420,7 +420,7 @@ on:
       - 'main'
 
 jobs:
-  on-success:
+  build-deploy-docker-image:
     runs-on: ubuntu-22.04
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
@@ -456,7 +456,7 @@ jobs:
           context: ./httpd
           tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-httpd:latest
           push: ${{ github.ref == 'refs/heads/main' }}
-  on-failure:
+  on-failure-echo:
     runs-on: ubuntu-22.04
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:
