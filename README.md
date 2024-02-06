@@ -457,10 +457,16 @@ jobs:
       - run: echo 'Test Backend and Sonar Analysis has failed'
 ```
 
+---
+### Failed Pipeline
+
 Ainsi, on peut voir sur un failed de test-backend, le job suivant se lance, mais ne fait pas les étapes liées a docker, il effectue seulement celle du on-failure : 
 ![capture failed](assets/failed-test.png)
 ![capture failed](assets/on-failure.png)
 ![capture failed](assets/detail-on-failure.png)
+
+--- 
+### Success Pipeline
 
 Et sur une pipeline réussie, on voit bien que le job on-success se lance, et effectue les étapes liées à docker :
 
