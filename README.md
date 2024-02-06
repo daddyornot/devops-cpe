@@ -464,7 +464,8 @@ jobs:
 ---
 ### Failed Pipeline
 
-Ainsi, on peut voir sur un failed de test-backend, le job suivant se lance, mais ne fait pas les étapes liées a docker, il effectue seulement celle du on-failure : 
+Ainsi, on peut voir sur un failed de test-backend, le job suivant se lance, mais ne fait pas les étapes liées a docker, il effectue seulement celle du on-failure
+(Les noms des jobs ne sont pas les memes que dans mon fichier plus haut car j'ai mis leur nom à jour entre temps, mais rien n'a changé à part ce nom) :
 ![capture failed](assets/failed-test.png)
 ![capture failed](assets/on-failure.png)
 ![capture failed](assets/detail-on-failure.png)
@@ -472,7 +473,7 @@ Ainsi, on peut voir sur un failed de test-backend, le job suivant se lance, mais
 --- 
 ### Success Pipeline
 
-Et sur une pipeline réussie, on voit bien que le job on-success se lance, et effectue les étapes liées à docker :
+Et sur une pipeline réussie, on voit bien que le job on-success se lance, et effectue les étapes liées à docker (Les noms des jobs ne sont pas les memes que dans mon fichier plus haut car j'ai mis leur nom à jour entre temps, mais rien n'a changé à part ce nom) :
 
 ![capture success](assets/pipeline-success.png)
 ![capture success](assets/on-success.png)
