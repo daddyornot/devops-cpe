@@ -2,7 +2,7 @@
 
 # TP1 - Docker
 
-# 1-1 Document your database container essentials: commands and Dockerfile.
+## 1-1 Document your database container essentials: commands and Dockerfile.
 
 ## Architecture finale
 ```sh
@@ -80,7 +80,7 @@ Ou alors on peut utiliser le nom du container directement, car ils sont dans le 
 
 ![capture adminer](assets/adminer.png)
 
-# 1-2 Why do we need a multistage build? And explain each step of this dockerfile.
+## 1-2 Why do we need a multistage build? And explain each step of this dockerfile.
 
 On utilise un build multistage afin de découper notre build et notre run. Cela permet de faire des blocs réutilisables. Aussi, pour l'etape de build on n'a besoin que de maven pour compiler l'application, qui est plus leger que l'image complete amazon corretto.
 
@@ -113,7 +113,7 @@ COPY --from=myapp-build $MYAPP_HOME/target/*.jar $MYAPP_HOME/myapp.jar
 ENTRYPOINT java -jar myapp.jar
 ```
 
-# 1-3 Document docker-compose most important commands.
+## 1-3 Document docker-compose most important commands.
 ### docker compose 
 
 `up` : crée et lance les instances du fichier compose.yml
@@ -135,7 +135,7 @@ ENTRYPOINT java -jar myapp.jar
 `--build` : force le build s'il y a un build à effectuer
 
 
-# 1-4 Document your docker-compose file.
+## 1-4 Document your docker-compose file.
 Ajout d'un fichier `.env` pour garder toute les données sensibles dedans
 
 On utilise un volume nommé pour la base de données, cela permet de ne pas perdre les données si le container est supprimé, mais également on laisse docker s'occuper de l'endroit où est stocké ce volume.
@@ -222,7 +222,7 @@ PS : comme nous sommes dans un docker network, on peut utiliser le nom du contai
 
 ![capture docker ps](assets/dockerps.png)
 
-# 1-5 Document your publication commands and published images in dockerhub.
+## 1-5 Document your publication commands and published images in dockerhub.
 
 
 ```sh
@@ -268,11 +268,13 @@ Cela nous permettra à l'avenir de pouvoir pull l'image depuis n'importe quelle 
 
 --- 
 
-# GitHub Actions
+# TP2 - GitHub Actions
 
 ## 2-1 What are testcontainers?
 
 Testcontainers sont des librairies Java qui permettent de lancer des conteneurs Docker pour les tests. Cela permet de tester des applications qui ont besoin de dépendances externes (comme une base de données) sans avoir à les installer sur la machine de développement.
+
+## 2-2 Document your Github Actions configurations.
 
 ![capture action success](assets/action-succeed.png)
 
@@ -282,6 +284,7 @@ Ne pas oublier de renseigner les secrets dans les settings du repository sur Git
 
 ![capture secrets](assets/docker-secrets.png)
 
+### main.yml
 ```yaml
 name: CI devops 2023
 on:
@@ -314,8 +317,8 @@ jobs:
 
   # Job to build and publish docker image
   build-and-push-docker-image:
-   needs: test-backend
    # run only when code is compiling and tests are passing
+   needs: test-backend
    runs-on: ubuntu-22.04
 
    # steps to perform in job
@@ -355,7 +358,7 @@ jobs:
 
 ![full pipeline](assets/full-pipeline.png)
 
-## SonarCloud
+## 2-3 SonarCloud - Document your quality gate configuration. 
 
 Une fois le compte créé, il faut créer une organisation ainsi qu'un projet.
 Il nous faudra également créer un token afin de pouvoir accéder à l'API de SonarCloud.
@@ -366,7 +369,7 @@ mvn -B verify sonar:sonar -Dsonar.projectKey=PROJECT_KEY -Dsonar.organization=OR
 ```
 ![capture sonar](assets/sonar.png)
 
-## Splitted pipeline
+## Bonus - Splitted pipeline
 
 On créé 2 fichiers yaml pour séparer les jobs de la pipeline, cela permet de mieux organiser le code et de le rendre plus lisible.
 
