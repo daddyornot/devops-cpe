@@ -305,7 +305,7 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v3 
         with:
-          java-version: 17
+          java-version: '17'
           distribution: 'adopt'
 
       - name: Build and test with Maven
@@ -410,7 +410,7 @@ jobs:
 ```
 
 ### build-and-push-docker-image.yml
-Ce job sera lancé à chaque fois que le job précédent (test-backend) se termine, grace à l'option workflow_run:completed. Aussi, grace aux on-success et on-failure, on peut lancer des jobs différents en fonction du résultat du job précédent.
+Ce job sera lancé à chaque fois que le job précédent (test-backend) se termine, grace à l'option workflow_run:completed. Aussi, grace au résultat de `github.event.workflow_run.conclusion == 'success'`, on peut lancer des jobs différents en fonction du résultat du job précédent.
 ```yaml
 name: Build and Push to DockerHub
 on:
@@ -437,11 +437,8 @@ jobs:
       - name: Build image and push backend
         uses: docker/build-push-action@v3
         with:
-          # relative path to the place where source code with Dockerfile is located
           context: ./simple-api-student
-          # Note: tags has to be all lower-case
           tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-simple-api:latest
-          # build on feature branches, push only on main branch
           push: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build image and push database
