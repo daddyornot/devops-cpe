@@ -359,10 +359,10 @@ jobs:
 
 Une fois le compte créé, il faut créer une organisation ainsi qu'un projet.
 Il nous faudra également créer un token afin de pouvoir accéder à l'API de SonarCloud.
-Modifier les valeurs de PROJECT_KEY et ORGANIZATION_KEY par les réels.
+Modifier les valeurs de `PROJECT_KEY` et `ORGANIZATION_KEY` par les réels.
 Il faut ajouter cette commande lors du build and test afin de lancer l'analyse de SonarCloud :
 ```sh
-mvn -B verify sonar:sonar -Dsonar.projectKey=PROJECT_KEY -Dsonar.organization=ORGANIZATION_KEY -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./simple-api-student/pom.xml
+mvn -B verify sonar:sonar -Dsonar.projectKey=PROJECT_KEY -Dsonar.organization=ORGANIZATION_KEY -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./pom.xml
 ```
 ![capture sonar](assets/sonar.png)
 
@@ -460,4 +460,4 @@ jobs:
 Sur la capture, on voit bien que le job build-and-push-docker-image ne s'est pas lancé car le job test-backend a échoué en premier lieu.
 Ensuite sur le second run, le job build-and-push-docker-image s'est bien lancé car le job test-backend a réussi.
 
-![capture splitted pipeline](assets/splitted-pipeline.png)
+![capture splitted pipeline](assets/split-pipeline.png)
