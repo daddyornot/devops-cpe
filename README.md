@@ -277,6 +277,7 @@ Testcontainers sont des librairies Java qui permettent de lancer des conteneurs 
 ## 2-2 Document your Github Actions configurations.
 
 ![capture action success](assets/action-succeed.png)
+![capture action success](assets/1-pipeline-success.png)
 
 ## Configuration
 
@@ -375,7 +376,7 @@ mvn -B verify sonar:sonar -Dsonar.projectKey=PROJECT_KEY -Dsonar.organization=OR
 On créé 2 fichiers yaml pour séparer les jobs de la pipeline, cela permet de mieux organiser le code et de le rendre plus lisible.
 
 ### test-backend.yml
-Ce job sera lancé à chaque push sur les branches main et develop, ainsi qu'à chaque pull request. Il conditionnera le lancement du job suivant (build and deploy).
+Ce job sera lancé à chaque push sur les branches main et develop, ainsi qu'à chaque pull request. Il conditionnera le lancement du job suivant `build-deploy-docker-image`, s'il fail, il ne lancera pas le job `build-deploy-docker-image` mais `on-failure-echo`.
 
 ```yaml
 name: Test Backend and Sonar Analysis
