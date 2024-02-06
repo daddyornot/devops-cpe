@@ -365,3 +365,99 @@ Il faut ajouter cette commande lors du build and test afin de lancer l'analyse d
 mvn -B verify sonar:sonar -Dsonar.projectKey=PROJECT_KEY -Dsonar.organization=ORGANIZATION_KEY -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./simple-api-student/pom.xml
 ```
 ![capture sonar](assets/sonar.png)
+
+## Splitted pipeline
+
+On créé 2 fichiers yaml pour séparer les jobs de la pipeline, cela permet de mieux organiser le code et de le rendre plus lisible.
+
+### test-backend.yml
+Ce job sera lancé à chaque push sur les branches main et develop, ainsi qu'à chaque pull request. Il conditionnera le lancement du job suivant (build and deploy).
+
+```yaml
+name: Test Backend and Sonar Analysis
+on:
+  #to begin you want to launch this job in main and develop
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+
+jobs:
+  test-backend: 
+    runs-on: ubuntu-22.04
+    steps:
+     #checkout your github code using actions/checkout@v2.5.0
+      - name: Checkout code
+        uses: actions/checkout@v2.5.0
+
+     #do the same with another action (actions/setup-java@v3) that enable to setup jdk 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3 
+        with:
+          java-version: 17
+          distribution: 'adopt'
+
+     #finally build your app with the latest command
+      - name: Build and test with Maven
+        working-directory: ./simple-api-student
+        run: mvn -B verify sonar:sonar -Dsonar.projectKey=tp-devops-cpe-2024_simple-api -Dsonar.organization=tp-devops-cpe-2024 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./pom.xml
+```
+
+### build-and-push-docker-image.yml
+Ce job sera lancé à chaque fois que le job précédent (test-backend) se termine avec succès, grace à l'option workflow_run:completed.
+```yaml
+name: Build and Push to DockerHub
+on:
+  workflow_run:
+    workflows: ["Test Backend and Sonar Analysis"]
+    types: [completed]
+    branches:
+      - 'main'
+
+jobs:
+  on-success:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.5.0
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build image and push backend
+        uses: docker/build-push-action@v3
+        with:
+          # relative path to the place where source code with Dockerfile is located
+          context: ./simple-api-student
+          # Note: tags has to be all lower-case
+          tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-simple-api:latest
+          # build on feature branches, push only on main branch
+          push: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build image and push database
+        uses: docker/build-push-action@v3
+        with:
+          context: ./database
+          tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-database:latest
+          push: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build image and push httpd
+        uses: docker/build-push-action@v3
+        with:
+          context: ./httpd
+          tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-httpd:latest
+          push: ${{ github.ref == 'refs/heads/main' }}
+  on-failure:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'Test Backend and Sonar Analysis has failed'
+```
+
+Sur la capture, on voit bien que le job build-and-push-docker-image ne s'est pas lancé car le job test-backend a échoué en premier lieu.
+Ensuite sur le second run, le job build-and-push-docker-image s'est bien lancé car le job test-backend a réussi.
+
+![capture splitted pipeline](assets/splitted-pipeline.png)
