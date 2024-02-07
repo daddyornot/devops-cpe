@@ -43,6 +43,13 @@ jobs:
           context: ./httpd
           tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-httpd:latest
           push: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build image and push frontend
+        uses: docker/build-push-action@v3
+        with:
+          context: ./devops-front
+          tags:  ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-front:latest
+          push: ${{ github.ref == 'refs/heads/main' }}
   on-failure-echo:
     runs-on: ubuntu-22.04
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}

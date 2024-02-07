@@ -7,6 +7,8 @@
     recreate: true
     networks:
       - name: "{{ docker_network_name }}"
+    ports:
+      - "8080:8080"
 
     env_file: '{{ path_env_file }}/.env'
 
