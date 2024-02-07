@@ -30,8 +30,8 @@
 
 
   roles:
-    #- docker
-    #- network
+    - docker
+    - network
     - database
     - app
     - proxy
