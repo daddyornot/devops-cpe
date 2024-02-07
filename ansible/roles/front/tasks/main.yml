@@ -5,7 +5,6 @@
     image: daddyornot/tp-devops-front
     state: started
     recreate: true
+    pull: true
     networks:
       - name: "{{ docker_network_name }}"
-    ports: 
-      - "80:80"

@@ -5,6 +5,7 @@
     image: daddyornot/tp-devops-simple-api
     state: started
     recreate: true
+    pull: true
     networks:
       - name: "{{ docker_network_name }}"
     ports:

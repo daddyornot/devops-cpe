@@ -5,7 +5,8 @@
     image: daddyornot/tp-devops-httpd
     state: started
     recreate: true
+    pull: true
     networks:
       - name: "{{ docker_network_name }}"
     ports: 
-      - "8081:80"
+      - "80:80"

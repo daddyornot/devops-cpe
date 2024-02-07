@@ -5,6 +5,7 @@
     image: daddyornot/tp-devops-database
     state: started
     recreate: true
+    pull: true
     networks:
       - name: "{{ docker_network_name }}"
 

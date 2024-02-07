@@ -6,8 +6,8 @@
     path_env_file: "/home/{{ ansible_user }}/.config"
 
   roles:
-    - docker
-    - network
+    #- docker
+    #- network
     - copy-env
     - database
     - app
