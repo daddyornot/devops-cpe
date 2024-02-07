@@ -17,7 +17,7 @@ jobs:
         # Required, playbook filepath
           playbook: playbook.yml
           # Optional, directory where playbooks live
-          directory: ansible/
+          directory: ./
           # Optional, ansible configuration file content (ansible.cfg)
           # configuration: |
           #   [defaults]
