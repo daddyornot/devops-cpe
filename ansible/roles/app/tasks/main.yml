@@ -10,6 +10,10 @@
       - name: "{{ docker_network_name }}"
     ports:
       - "8080:8080"
-
-    env_file: '{{ path_env_file }}/.env'
-
+    env:
+      # POSTGRES_USER: "'{{ lookup('env', 'POSTGRES_USER') }}'" 
+      # POSTGRES_PASSWORD: "'{{ lookup('env', 'POSTGRES_PASSWORD') }}'"
+      # POSTGRES_DB: "'{{ lookup('env', 'POSTGRES_DB') }}'"
+      POSTGRES_USER: "{{ POSTGRES_USER }}" 
+      POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
+      POSTGRES_DB: "{{ POSTGRES_DB }}"
