@@ -32,4 +32,6 @@ jobs:
           #   [all]
           #   damien.mailhebiau.takima.cloud
           inventory: ${{ secrets.ANSIBLE_INVENTORY }}
+          # Optional, encrypted vault password
+          vault_password: ${{ secrets.VAULT_PASSWORD }} 
 
