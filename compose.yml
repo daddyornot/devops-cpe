@@ -8,6 +8,8 @@ services:
             dockerfile: Dockerfile
         networks: 
           - tp1-network
+        ports: 
+          - "8080:8080"
         depends_on:
           - database
         env_file:
@@ -31,7 +33,7 @@ services:
             context: httpd
             dockerfile: Dockerfile
         ports: 
-          - "8080:80"
+          - "8081:80"
         networks:
           - tp1-network
         depends_on:
