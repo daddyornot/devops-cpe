@@ -1,0 +1,14 @@
+- hosts: all
+  gather_facts: false
+  become: true
+  vars: 
+    docker_network_name: "api-network"
+    path_env_file: "/home/{{ ansible_user }}/.config"
+
+  roles:
+    - docker
+    - network
+    - copy-env
+    - database
+    - app
+    - proxy

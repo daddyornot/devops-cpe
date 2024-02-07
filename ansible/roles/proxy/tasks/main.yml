@@ -1,0 +1,11 @@
+---
+- name: Launch front (proxy)
+  docker_container:
+    name: web
+    image: daddyornot/tp-devops-httpd
+    state: started
+    recreate: true
+    networks:
+      - name: "{{ docker_network_name }}"
+    ports:
+      - "80:80"

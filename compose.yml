@@ -4,7 +4,7 @@ services:
     api:
         container_name: api
         build: 
-            context: spring/simple-api-student
+            context: simple-api-student
             dockerfile: Dockerfile
         networks: 
           - tp1-network
@@ -27,12 +27,25 @@ services:
 
     web:
         container_name: web
+        build:
+            context: httpd
+            dockerfile: Dockerfile
         ports: 
           - "8080:80"
         networks:
           - tp1-network
         depends_on:
           - api
+
+    front:
+      container_name: front
+      build:
+        context: devops-front
+      networks:
+        - tp1-network
+      ports:
+        - "80:80"
+      
 
 networks:
     tp1-network:

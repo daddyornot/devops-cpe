@@ -1,0 +1,7 @@
+all:
+  vars:
+    ansible_user: centos
+    ansible_ssh_private_key_file: /home/damien/Documents/Ecole/s8/Devops/.ssh/id_rsa
+  children:
+    prod:
+      hosts: damien.mailhebiau.takima.cloud

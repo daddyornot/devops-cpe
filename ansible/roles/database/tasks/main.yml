@@ -1,0 +1,14 @@
+---
+- name: Launch database
+  docker_container:
+    name: database
+    image: daddyornot/tp-devops-database
+    state: started
+    recreate: true
+    networks:
+      - name: "{{ docker_network_name }}"
+
+    env_file: '{{ path_env_file }}/.env'
+
+
+

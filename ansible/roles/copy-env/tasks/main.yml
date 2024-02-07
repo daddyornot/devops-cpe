@@ -1,0 +1,12 @@
+---
+- name: ensures {{ path_env_file }} dir exists
+  file: 
+    path: "{{ path_env_file }}"
+    state: directory
+
+- name: Copy env file to dest
+  copy:
+    src: .env
+    dest: "{{ path_env_file }}" 
+    mode: '400'
+

@@ -1,0 +1,12 @@
+---
+- name: Launch api
+  docker_container:
+    name: api
+    image: daddyornot/tp-devops-simple-api
+    state: started
+    recreate: true
+    networks:
+      - name: "{{ docker_network_name }}"
+
+    env_file: '{{ path_env_file }}/.env'
+

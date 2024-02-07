@@ -170,6 +170,9 @@ services:
 
     web:
         container_name: web
+        build:
+            context: httpd
+            dockerfile: Dockerfile
         ports: 
           - "8080:80"
         networks:
@@ -478,5 +481,230 @@ Et sur une pipeline réussie, on voit bien que le job on-success se lance, et ef
 ![capture success](assets/pipeline-success.png)
 ![capture success](assets/on-success.png)
 ![capture success](assets/detail-on-success.png)
+
+
+# TP3 - Ansible 
+
+## 3-1 Document your inventory and base commands
+## Commandes principale ansible :
+Sans le spécifier, ansible va chercher les hosts dans le fichier `/etc/ansible/hosts`
+- `ansible all -m yum -a "name=httpd state=present" --private-key=../../../.ssh/id_rsa -u centos --become`
+
+`all` : vise tous les hosts définis dans l'inventaire
+
+`-m` : module à utiliser
+
+- `name=httpd` : nom du package à installer
+
+- `state=present` : permet de s'assurer que le package est installé, sinon l'installe, peut prendre la valeur `absent` pour le désinstaller
+
+`-a` : arguments à passer au module
+
+`--private-key` : clé privée à utiliser pour se connecter
+
+`-u` : utilisateur à utiliser pour se connecter
+
+`--become` : permet de passer en root pour lancer la commande
+
+- `ansible all -m shell -a 'echo "<html><h1>Hello World</h1></html>" >> /var/www/html/index.html' --private-key=../../../.ssh/id_rsa -u centos --become`
+
+`-m` : module à utiliser
+
+  `shell` : permet de lancer une commande shell
+
+`-a` : arguments à passer au module
+
+  - `'echo "<html><h1>Hello World</h1></html>" >> /var/www/html/index.html'` : commande à lancer
+
+## Inventory
+```yaml
+all:
+  vars:
+    # user to use for ssh
+    ansible_user: centos
+    # ssh key to use
+    ansible_ssh_private_key_file: /home/damien/Documents/Ecole/s8/Devops/.ssh/id_rsa
+  # hosts
+  children:
+    # hosts in 'prod' group
+    prod:
+      hosts: damien.mailhebiau.takima.cloud
+```
+
+Maintenant on peut spécifier l'inventaire à utiliser avec l'option `-i` :
+```sh
+ansible all -i inventories/setup.yml -m setup -a "filter=ansible_distribution*"
+```
+Grâce au module `setup`, on peut récupérer des informations sur les machines, comme par exemple ici, la distribution de l'OS.
+
+```sh
+ansible all -i inventories/setup.yml -m setup -a "filter=ansible_distribution*"
+damien.mailhebiau.takima.cloud | SUCCESS => {
+    "ansible_facts": {
+        "ansible_distribution": "CentOS",
+        "ansible_distribution_file_parsed": true,
+        "ansible_distribution_file_path": "/etc/redhat-release",
+        "ansible_distribution_file_variety": "RedHat",
+        "ansible_distribution_major_version": "7",
+        "ansible_distribution_release": "Core",
+        "ansible_distribution_version": "7.9",
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false
+}
+```
+
+## 3-2 Document your playbook
+
+On se retrouve avec cette architecture :
+```sh
+.
+├── inventories
+│   └── setup.yml
+├── playbook.yml
+└── roles
+    └── docker
+        ├── handlers
+        │   └── main.yml
+        └── tasks
+            ├── main.yml
+```
+
+### playbook.yml
+Avec l'ajout d'un role docker, notre playbook s'est allégé, et est plus lisible, il ne fait plus que lancer le role docker.
+
+```yaml
+- hosts: all
+  gather_facts: false
+  become: true
+
+  roles:
+    - docker
+```
+
+Et c'est maintenant le role docker qui contient les tâches à effectuer : 
+
+### roles/docker/tasks/main.yml
+```yaml
+- name: Install device-mapper-persistent-data
+  yum:
+    name: device-mapper-persistent-data
+    state: latest
+
+- name: Install lvm2
+  yum:
+    name: lvm2
+    state: latest
+
+- name: add repo docker
+  command:
+    cmd: sudo yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Install Docker
+  yum:
+    name: docker-ce
+    state: present
+
+- name: Install python3
+  yum:
+    name: python3
+    state: present
+
+- name: Install docker with Python 3
+  pip:
+    name: docker
+    executable: pip3
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: Make sure Docker is running
+  service: name=docker state=started
+  tags: docker
+```
+
+## Document your docker_container tasks configuration.
+
+### playbook.yml
+```yaml
+---
+- hosts: all
+  gather_facts: false
+  become: true
+  vars: 
+    docker_network_name: "api-network"
+    path_env_file: "/home/{{ ansible_user }}/.config"
+
+  roles:
+    - docker
+    - network
+    - copy-env
+    - database
+    - app
+    - proxy
+```
+### roles/network/tasks/main.yml
+```yaml
+---
+- name: Create docker network
+  docker_network:
+    name: "{{ docker_network_name }}"
+```
+
+### roles/copys-env/tasks/main.yml
+```yaml
+---
+- name: ensures {{ path_env_file }} dir exists
+  file: 
+    path: "{{ path_env_file }}"
+    state: directory
+
+- name: Copy env file to dest
+  copy:
+    src: .env
+    dest: "{{ path_env_file }}" 
+    mode: '400'
+```
+### roles/database/tasks/main.yml
+```yaml
+---
+- name: Launch database
+  docker_container:
+    name: database
+    image: daddyornot/tp-devops-database
+    state: started
+    recreate: true
+    networks:
+      - name: "{{ docker_network_name }}"
+    env_file: '{{ path_env_file }}/.env'
+```
+### roles/app/tasks/main.yml
+```yaml
+---
+- name: Launch api
+  docker_container:
+    name: api
+    image: daddyornot/tp-devops-simple-api
+    state: started
+    recreate: true
+    networks:
+      - name: "{{ docker_network_name }}"
+    env_file: '{{ path_env_file }}/.env'
+```
+### roles/proxy/tasks/main.yml
+```yaml
+---
+- name: Launch front (proxy)
+  docker_container:
+    name: web
+    image: daddyornot/tp-devops-httpd
+    state: started
+    recreate: true
+    networks:
+      - name: "{{ docker_network_name }}"
+    ports:
+      - "80:80"
+```
+
+
 
 
