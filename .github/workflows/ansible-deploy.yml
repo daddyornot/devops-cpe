@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-22.04
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.5.0
+
       - name: Run deploy playbook
         uses: dawidd6/action-ansible-playbook@v2
         with:
@@ -31,15 +34,3 @@ jobs:
           #   [all]
           #   damien.mailhebiau.takima.cloud
 
-          #   [group1]
-          #   example.com
-          # Optional, SSH known hosts file content
-          # known_hosts: |
-          #   example.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
-          # Optional, encrypted vault password
-          vault_password: ${{secrets.VAULT_PASSWORD}}
-          # Optional, galaxy requirements filepath
-          # requirements: galaxy-requirements.yml
-          # Optional, additional flags to pass to ansible-playbook
-          options: |
-            --inventory ansible/inventories/setup.yml
