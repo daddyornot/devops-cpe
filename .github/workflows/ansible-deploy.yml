@@ -17,7 +17,7 @@ jobs:
         # Required, playbook filepath
           playbook: playbook.yml
           # Optional, directory where playbooks live
-          directory: ./ansible
+          directory: ansible/
           # Optional, ansible configuration file content (ansible.cfg)
           # configuration: |
           #   [defaults]
@@ -42,7 +42,7 @@ jobs:
           # requirements: galaxy-requirements.yml
           # Optional, additional flags to pass to ansible-playbook
           options: |
-            --inventory ./ansible/inventories/setup.yml
+            --inventory ansible/inventories/setup.yml
             # --limit group1
             # --extra-vars hello=there
             # --verbose
