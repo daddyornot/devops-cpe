@@ -43,6 +43,3 @@ jobs:
           # Optional, additional flags to pass to ansible-playbook
           options: |
             --inventory ansible/inventories/setup.yml
-            # --limit group1
-            # --extra-vars hello=there
-            # --verbose
