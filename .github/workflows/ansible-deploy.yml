@@ -1,0 +1,48 @@
+name: Deploy with Ansible to aws
+on:
+  workflow_run:
+    workflows: ["Build and Push to DockerHub"]
+    types: [completed]
+    branches:
+      - 'main'
+
+jobs:
+  ansible-deploy:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Run deploy playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+        # Required, playbook filepath
+          playbook: ./ansible/playbook.yml
+          # Optional, directory where playbooks live
+          # directory: ./
+          # Optional, ansible configuration file content (ansible.cfg)
+          # configuration: |
+          #   [defaults]
+          #   callbacks_enabled = ansible.posix.profile_tasks, ansible.posix.timer
+          #   stdout_callback = yaml
+          #   nocows = false
+          # Optional, SSH private key
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Optional, literal inventory file contents
+          # inventory: |
+          #   [all]
+          #   damien.mailhebiau.takima.cloud
+
+          #   [group1]
+          #   example.com
+          # Optional, SSH known hosts file content
+          # known_hosts: |
+          #   example.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+          # Optional, encrypted vault password
+          vault_password: ${{secrets.VAULT_PASSWORD}}
+          # Optional, galaxy requirements filepath
+          # requirements: galaxy-requirements.yml
+          # Optional, additional flags to pass to ansible-playbook
+          options: |
+            --inventory ./ansible/inventories/setup.yml
+            # --limit group1
+            # --extra-vars hello=there
+            # --verbose

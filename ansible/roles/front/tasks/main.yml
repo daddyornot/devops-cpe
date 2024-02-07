@@ -2,7 +2,7 @@
 - name: Launch front
   docker_container:
     name: front
-    image: daddyornot/tp-devops-frontend
+    image: daddyornot/tp-devops-front
     state: started
     recreate: true
     networks:
