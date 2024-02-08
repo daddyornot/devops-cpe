@@ -763,6 +763,9 @@ En n'ouvrant que des ports sur le conteneur httpd, on peut rediriger les requêt
   ProxyPass / http://api:8080/
   ProxyPassReverse / http://api:8080/
 </VirtualHost>
+
+# On rajoute également Listen sur le port 8080 afin d'écouter les requetes sur ce port en plus du 80 défini plus haut
+Listen 8080
 ```
 
 ### Workflow Github Action
