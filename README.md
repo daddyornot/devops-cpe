@@ -1,5 +1,7 @@
 ### MAILHEBIAU Damien - 4IRC
 
+SEND TO byvernault@takima.fr
+
 # TP1 - Docker
 
 ## 1-1 Document your database container essentials: commands and Dockerfile.

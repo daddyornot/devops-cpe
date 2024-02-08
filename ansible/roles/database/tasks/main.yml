@@ -8,6 +8,8 @@
     pull: true
     networks:
       - name: "{{ docker_network_name }}"
+    volumes:
+      - data:/var/lib/postgresql/data
     env:
       POSTGRES_USER: "{{ POSTGRES_USER }}" 
       POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
