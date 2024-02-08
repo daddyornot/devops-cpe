@@ -1,7 +1,5 @@
 ### MAILHEBIAU Damien - 4IRC
 
-SEND TO byvernault@takima.fr
-
 # TP1 - Docker
 
 ## 1-1 Document your database container essentials: commands and Dockerfile.
@@ -696,6 +694,8 @@ Ce role n'est plus utilisé, mais il permettait de copier un fichier .env sur la
     pull: true
     networks:
       - name: "{{ docker_network_name }}"
+    volumes:
+      - data:/var/lib/postgresql/data
     env:
       POSTGRES_USER: "{{ POSTGRES_USER }}" 
       POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
