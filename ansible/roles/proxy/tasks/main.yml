@@ -1,7 +1,7 @@
 ---
 - name: Launch proxy
   docker_container:
-    name: web
+    name: "{{ proxy_container_name }}"
     image: daddyornot/tp-devops-httpd
     state: started
     recreate: true
@@ -10,3 +10,4 @@
       - name: "{{ docker_network_name }}"
     ports: 
       - "80:80"
+      - "8080:8080"

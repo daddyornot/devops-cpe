@@ -1,7 +1,7 @@
 ---
 - name: Launch front
   docker_container:
-    name: front
+    name: "{{ front_container_name }}"
     image: daddyornot/tp-devops-front
     state: started
     recreate: true

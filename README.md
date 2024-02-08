@@ -625,22 +625,60 @@ Et c'est maintenant le role docker qui contient les tâches à effectuer :
 ## Document your docker_container tasks configuration.
 
 ### playbook.yml
+
+On lance notre playbook avec la commande : `ansible-playbook -i inventories/setup.yml playbook.yml --ask-vault-pass` en rentrant le mot de passe du vault précédemment défini.
+
+Pour rappel, on encrypte nos variables sensibles avec la commande `ansible-vault encrypt_string 'valeur_a_encrypt' --name 'nom_de_variable'`
+
+Sinon, pour encrypt un fichier entier, on utilise `ansible-vault encrypt file.yml`. Ou on peut aussi créer un fichier vaulté directement avec `ansible-vault create file.yml`.
+On les rentre ensuite sous la forme suivante dans l'editeur : 
+```yaml
+mot_de_passe_bdd: "mot_de_passe_securise"
+utilisateur_bdd: "utilisateur_secure"
+```
+
 ```yaml
 ---
 - hosts: all
   gather_facts: false
   become: true
   vars: 
+    ansible_user: "centos"
     docker_network_name: "api-network"
-    path_env_file: "/home/{{ ansible_user }}/.config"
+    db_container_name: "database"
+    api_container_name: "api"
+    proxy_container_name: "web"
+    front_container_name: "front"
+    # Pour ces valeurs, on peut aussi (plutôt meme) les prendre depuis un fichier vaulté
+    POSTGRES_USER: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          37376162633933353534396637653931663430356464303037396437333934356630353766616234
+          3766353866636162633564616131343066633961393738630a663964366234313336303666366665
+          37346164643636363366313865306534326232306632373135343034633434633833636230343966
+          3239366630383630300a633631306131386130633031353437626135343062386130303265303531
+          3264
+    POSTGRES_PASSWORD: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          63363632643839646230626332323439343239333735636338316365383964353361396539363630
+          6139346331643163383632626332353365376263333662310a353961656135633736343865306538
+          66633435653666373631346334393465333932666464336437353663393866643037333834353464
+          6366616162333739310a346539633433383338353530363039633066323833636166303537323239
+          3832
+    POSTGRES_DB: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          63613635323433366638326135356230366132393933666330663534623235306337346162623032
+          3331393466373336636430643762613035663161653837640a663332313761363133396265666235
+          34646134373639636661346136653934393639316435656433626335396530336130616235623364
+          3739303631343032300a393832353338346364653235666637656138666530313138376363353638
+          3630
 
   roles:
     - docker
     - network
-    - copy-env
     - database
     - app
     - proxy
+    - front
 ```
 ### roles/network/tasks/main.yml
 ```yaml
@@ -651,6 +689,7 @@ Et c'est maintenant le role docker qui contient les tâches à effectuer :
 ```
 
 ### roles/copys-env/tasks/main.yml
+Ce role n'est plus utilisé, mais il permettait de copier un fichier .env sur la machine distante, et de le rendre accessible seulement par l'utilisateur root. Il était utilisé avant d'utiliser les variables d'environnement vaultée.
 ```yaml
 ---
 - name: ensures {{ path_env_file }} dir exists
@@ -669,42 +708,129 @@ Et c'est maintenant le role docker qui contient les tâches à effectuer :
 ---
 - name: Launch database
   docker_container:
-    name: database
+    name: "{{ db_container_name }}"
     image: daddyornot/tp-devops-database
     state: started
     recreate: true
+    pull: true
     networks:
       - name: "{{ docker_network_name }}"
-    env_file: '{{ path_env_file }}/.env'
+    env:
+      POSTGRES_USER: "{{ POSTGRES_USER }}" 
+      POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
+      POSTGRES_DB: "{{ POSTGRES_DB }}"
 ```
 ### roles/app/tasks/main.yml
 ```yaml
 ---
 - name: Launch api
   docker_container:
-    name: api
+    name: "{{ api_container_name }}"
     image: daddyornot/tp-devops-simple-api
     state: started
     recreate: true
+    pull: true
     networks:
       - name: "{{ docker_network_name }}"
-    env_file: '{{ path_env_file }}/.env'
+    env:
+      POSTGRES_USER: "{{ POSTGRES_USER }}" 
+      POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
+      POSTGRES_DB: "{{ POSTGRES_DB }}"
 ```
 ### roles/proxy/tasks/main.yml
 ```yaml
 ---
-- name: Launch front (proxy)
+- name: Launch proxy
   docker_container:
-    name: web
+    name: "{{ proxy_container_name }}"
     image: daddyornot/tp-devops-httpd
     state: started
     recreate: true
+    pull: true
     networks:
       - name: "{{ docker_network_name }}"
-    ports:
+    ports: 
       - "80:80"
+      - "8080:8080"
+```
+### roles/front/tasks/main.yml
+```yaml
+---
+- name: Launch front
+  docker_container:
+    name: "{{ front_container_name }}"
+    image: daddyornot/tp-devops-front
+    state: started
+    recreate: true
+    pull: true
+    networks:
+      - name: "{{ docker_network_name }}"
+```
+
+### httpd.conf
+En n'ouvrant que des ports sur le conteneur httpd, on peut rediriger les requêtes vers les autres conteneurs, et ainsi ne pas exposer directement les autres conteneurs sur le réseau.
+
+```apache
+# toutes les requetes arrivant sur le port 80 redirigeront vers le port 80 du container front
+<VirtualHost *:80>
+  ProxyPreserveHost On
+  ProxyPass / http://front:80/
+  ProxyPassReverse / http://front:80/
+</VirtualHost>
+
+# toutes les requetes arrivant sur le port 8080 redirigeront vers le port 8080 du container api
+<VirtualHost *:8080>
+  ProxyPreserveHost On
+  ProxyPass / http://api:8080/
+  ProxyPassReverse / http://api:8080/
+</VirtualHost>
+```
+
+### Workflow Github Action
+Ce workflow permet de lancer le playbook ansible à chaque fois que le workflow précédent se termine, et que le résultat est un succès. 
+Il est necessaire de créer 3 nouveaux secrets dans les settings du repository : `SSH_PRIVATE_KEY`, `ANSIBLE_INVENTORY`, `VAULT_PASSWORD`
+
+```yaml
+name: Deploy with Ansible to aws
+on:
+  workflow_run:
+    workflows: ["Build and Push to DockerHub"]
+    types: [completed]
+    branches:
+      - 'main'
+
+jobs:
+  ansible-deploy:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.5.0
+
+      - name: Run deploy playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+        # Required, playbook filepath
+          playbook: playbook.yml
+          # Optional, directory where playbooks live
+          directory: ./ansible
+          # Optional, ansible configuration file content (ansible.cfg)
+          # Sans cette ligne, cela ne fonctionnait pas meme avec le ansible_user défini dans le playbook...
+          configuration: |
+            [defaults]
+            ansible_user=centos
+          # Optional, SSH private key
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Optional, literal inventory file contents
+          # inventory: |
+          #   [all]
+          #   damien.mailhebiau.takima.cloud
+          inventory: ${{ secrets.ANSIBLE_INVENTORY }}
+          # Optional, encrypted vault password
+          vault_password: ${{ secrets.VAULT_PASSWORD }} 
 ```
 
 
-
+### Finally
+![capture website](assets/working-server.png)
 

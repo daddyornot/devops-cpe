@@ -1,19 +1,14 @@
 ---
 - name: Launch api
   docker_container:
-    name: api
+    name: "{{ api_container_name }}"
     image: daddyornot/tp-devops-simple-api
     state: started
     recreate: true
     pull: true
     networks:
       - name: "{{ docker_network_name }}"
-    ports:
-      - "8080:8080"
     env:
-      # POSTGRES_USER: "'{{ lookup('env', 'POSTGRES_USER') }}'" 
-      # POSTGRES_PASSWORD: "'{{ lookup('env', 'POSTGRES_PASSWORD') }}'"
-      # POSTGRES_DB: "'{{ lookup('env', 'POSTGRES_DB') }}'"
       POSTGRES_USER: "{{ POSTGRES_USER }}" 
       POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
       POSTGRES_DB: "{{ POSTGRES_DB }}"
